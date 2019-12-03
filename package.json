@@ -1,0 +1,15 @@
+{
+  "name": "adventofcode2019js",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/Yaugen/adventofcode2019js.git",
+  "author": "Yaugen <eugene@novoroll.com>",
+  "license": "MIT",
+  "dependencies": {
+    "jest": "^24.9.0"
+  },
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch"
+  }
+}
