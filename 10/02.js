@@ -134,29 +134,43 @@ function getAngle([x1, y1], [x2, y2]) {
   if (angleRadians < 0) angleRadians += 360;
   angleRadians -= 90;
   if (angleRadians < 0) angleRadians += 360;
-  console.log(x1, x2, y1, y2, angleRadians);
+  // console.log(x1, x2, y1, y2, angleRadians);
   return angleRadians;
 }
-console.log(getAngle([8, 3], [8, 1]));
 const getVaporisingSequence = (coords, basePosition, width, height) => {
-  const asteroids = coords.slice();
-  const lineOfSight = getAsteroidLineOfSight(
-    basePosition,
-    asteroids,
-    width,
-    height
-  ).sort((a, b) => getAngle(basePosition, a) - getAngle(basePosition, b));
+  let sequence = [];
+  let asteroids = coords.filter(
+    a => !(a[0] === basePosition[0] && a[1] === basePosition[1])
+  );
+  while (asteroids.length) {
+    const lineOfSight = getAsteroidLineOfSight(
+      basePosition,
+      asteroids,
+      width,
+      height
+    ).sort((a, b) => getAngle(basePosition, a) - getAngle(basePosition, b));
 
-  console.log(lineOfSight);
+    sequence = sequence.concat(lineOfSight);
+    asteroids = asteroids.filter(
+      a => !lineOfSight.find(lsa => a[0] === lsa[0] && a[1] === lsa[1])
+    );
+  }
+  // console.log(sequence);
+  return sequence;
 };
 
 const input = fs
-  .readFileSync(path.resolve(__dirname, "./testInput.txt"), "utf8")
+  .readFileSync(path.resolve(__dirname, "./input.txt"), "utf8")
   .split(os.EOL);
 
 const map = getMap(input);
 const asteroids = getAsteroids(map);
 const width = map.length;
 const height = map[0].length;
-getVaporisingSequence(asteroids, [8, 3], width, height);
-// const [, basePosition] = getBasePosition(asteroids, width, height);
+const [, basePosition] = getBasePosition(asteroids, width, height);
+const sequence = getVaporisingSequence(asteroids, basePosition, width, height);
+// const sequence = getVaporisingSequence(asteroids, [8, 3], width, height);
+
+console.log(sequence[199]);
+const [resX, resY] = sequence[199];
+console.log(resX * 100 + resY);
