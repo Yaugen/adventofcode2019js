@@ -6,6 +6,7 @@
   "author": "Yaugen <eugene@novoroll.com>",
   "license": "MIT",
   "dependencies": {
+    "chalk": "^3.0.0",
     "jest": "^24.9.0"
   },
   "scripts": {
