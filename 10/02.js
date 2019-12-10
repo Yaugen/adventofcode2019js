@@ -120,15 +120,23 @@ const getBasePosition = (asteroids, width, height) =>
     })
     .reduce((max, a) => (a[0] > max[0] ? a : max), [0, 0]);
 
-const getAngle = ([baseX, baseY], [coordX, coordY]) => {
-  const [difX, difY] = [baseX - coordX, baseY - coordY];
-  let angle = Math.atan2(difY, difX) - Math.PI / 2;
-  //if (angle < 0) {
-  //  angle += Math.PI * 2;
-  //}
-  console.log([difX, difY], angle);
-  return angle;
-};
+// const getAngle = ([baseX, baseY], [coordX, coordY]) => {
+//   const [difX, difY] = [baseX - coordX, baseY - coordY];
+//   let angle = Math.atan2(difY, difX) - Math.PI / 2;
+//   //if (angle < 0) {
+//   //  angle += Math.PI * 2;
+//   //}
+//   console.log([difX, difY], angle);
+//   return angle;
+// };
+function getAngle([x1, y1], [x2, y2]) {
+  var angleRadians = (Math.atan2(y1 - y2, x1 - x2) * 180) / Math.PI;
+  if (angleRadians < 0) angleRadians += 360;
+  angleRadians -= 90;
+  if (angleRadians < 0) angleRadians += 360;
+  console.log(x1, x2, y1, y2, angleRadians);
+  return angleRadians;
+}
 console.log(getAngle([8, 3], [8, 1]));
 const getVaporisingSequence = (coords, basePosition, width, height) => {
   const asteroids = coords.slice();
@@ -137,9 +145,9 @@ const getVaporisingSequence = (coords, basePosition, width, height) => {
     asteroids,
     width,
     height
-  ); //.sort((a, b) => getAngle(basePosition, a) - getAngle(basePosition, b));
+  ).sort((a, b) => getAngle(basePosition, a) - getAngle(basePosition, b));
 
-  // console.log(lineOfSight);
+  console.log(lineOfSight);
 };
 
 const input = fs
