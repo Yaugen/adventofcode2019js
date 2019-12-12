@@ -25,6 +25,16 @@ function askQuestion(query) {
   );
 }
 
+function gcd_two_numbers(x, y) {
+  x = Math.abs(x);
+  y = Math.abs(y);
+  while (y) {
+    var t = y;
+    y = x % y;
+    x = t;
+  }
+  return x;
+}
 const gcd = (a, b) => {
   if (!b) {
     return a;
@@ -32,4 +42,8 @@ const gcd = (a, b) => {
   return gcd(b, a % b);
 };
 
-module.exports = { getRange, getManhattanDistance, gcd, askQuestion };
+const lcm = (a, b) => {
+  return !a || !b ? 0 : Math.abs((a * b) / gcd(a, b));
+};
+
+module.exports = { getRange, getManhattanDistance, gcd, lcm, askQuestion };
