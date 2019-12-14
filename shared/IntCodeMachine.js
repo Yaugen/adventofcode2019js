@@ -1,4 +1,4 @@
-const sleep = (ms = 0) => new Promise(resolve => setTimeout(resolve, ms));
+const { sleep } = require("./utils");
 
 class IntCodeMachine {
   constructor(program, input = [], name = "") {
@@ -8,6 +8,8 @@ class IntCodeMachine {
     this.output;
     this.name = name;
     this.relativeBase = 0;
+
+    this.shouldNotify = true;
   }
 
   get currentInstruction() {
@@ -62,6 +64,7 @@ class IntCodeMachine {
   sendInput(input) {
     this.input.push(input);
   }
+  onAwaitsInput() {}
   onOutput() {}
   onHalt() {}
 
@@ -126,9 +129,15 @@ class IntCodeMachine {
     const target = this.getAddress(mode1, 1);
 
     if (!this.input.length) {
+      if (this.shouldNotify) {
+        this.onAwaitsInput();
+      }
+      this.shouldNotify = false;
       await sleep();
     } else {
       this.writeMemory(target, this.input.shift());
+      this.shouldNotify = true;
+
       this.adjustPosition(2);
     }
   }
@@ -136,7 +145,8 @@ class IntCodeMachine {
     const value = this.getValue(mode1, 1);
 
     // console.log("output ", value);
-    setTimeout(() => this.onOutput(value), 0);
+    // setTimeout(() => this.onOutput(value), 0);
+    this.onOutput(value);
     this.output = value;
     this.adjustPosition(2);
   }

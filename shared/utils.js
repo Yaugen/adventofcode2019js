@@ -1,5 +1,8 @@
 const readline = require("readline");
 
+const sleep = (ms = 0, resolveWith = true) =>
+  new Promise(resolve => setTimeout(() => resolve(resolveWith), ms));
+
 const getRange = (from, to) => {
   const length = Math.abs(from - to) + 1;
   const sign = from > to ? -1 : 1;
@@ -25,6 +28,18 @@ function askQuestion(query) {
   );
 }
 
+const onKeyPress = async (cb = () => {}) => {
+  readline.emitKeypressEvents(process.stdin);
+  process.stdin.setRawMode(true);
+
+  process.stdin.on("keypress", (str, key) => {
+    cb(key, str);
+    if (key.ctrl && key.name === "c") {
+      process.exit();
+    }
+  });
+};
+
 function gcd_two_numbers(x, y) {
   x = Math.abs(x);
   y = Math.abs(y);
@@ -46,4 +61,12 @@ const lcm = (a, b) => {
   return !a || !b ? 0 : Math.abs((a * b) / gcd(a, b));
 };
 
-module.exports = { getRange, getManhattanDistance, gcd, lcm, askQuestion };
+module.exports = {
+  sleep,
+  onKeyPress,
+  getRange,
+  getManhattanDistance,
+  gcd,
+  lcm,
+  askQuestion
+};
