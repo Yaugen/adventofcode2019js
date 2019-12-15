@@ -86,12 +86,34 @@ const resolveToOre = (reactions, elementName, quantity) => {
   return sources;
 };
 
+const binarySearch = (initialLeft, initialRight, predicate) => {
+  let left = initialLeft;
+  let right = initialRight;
+  while (left !== right) {
+    let center = left + Math.ceil((right - left) / 2);
+
+    if (predicate(center)) {
+      right = center - 1;
+    } else {
+      left = center + 1;
+    }
+  }
+  return left;
+};
+
 const input = fs
-  .readFileSync(path.resolve(__dirname, "./testInput.txt"), "utf8")
+  .readFileSync(path.resolve(__dirname, "./input.txt"), "utf8")
   .split(os.EOL)
   .map(parseReaction);
 const reactions = getReactions(input);
 addReactionWeight(reactions);
 
-const [{ quantity }] = resolveToOre(reactions, "FUEL", 1);
-console.log(quantity);
+const [{ quantity: oreForOneFuel }] = resolveToOre(reactions, "FUEL", 1);
+const T = 1000000000000;
+const left = Math.floor(T / oreForOneFuel);
+
+const res = binarySearch(left, left * 2, value => {
+  const [{ quantity }] = resolveToOre(reactions, "FUEL", value);
+  return quantity > T;
+});
+console.log(res);
