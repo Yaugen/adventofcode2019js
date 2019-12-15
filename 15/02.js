@@ -94,7 +94,7 @@ const getArea = input =>
 
     let visited = new Set();
     let history = [];
-    let checkDirections = [1, 2, 3, 4];
+    let checkDirections = getCheckDirections();
 
     const makeStep = dir => {
       machine.sendInput(dir);

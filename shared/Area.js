@@ -1,90 +1,57 @@
-const { getRange } = require("./utils");
-
 class Area {
-  constructor(width = 0, height = 0, emptyCellValue = "") {
-    this.width = width;
-    this.height = height;
-    this.emptyCellValue = emptyCellValue;
-    this.area = Array(width)
-      .fill(0)
-      .map(() => Array(height).fill(emptyCellValue));
+  constructor(emptyValue = undefined) {
+    this.minX = 0;
+    this.minY = 0;
+    this.maxX = 0;
+    this.maxY = 0;
+    this.items = new Map();
+    this.emptyValue = emptyValue;
+  }
+
+  get width() {
+    const width = this.maxX - this.minX;
+    return width === 0 ? width : width + 1;
+  }
+
+  get height() {
+    const height = this.maxY - this.minY;
+    return height === 0 ? height : height + 1;
+  }
+
+  hash(x, y) {
+    return `${x}:${y}`;
   }
 
   set(x, y, value) {
-    if (x >= this.width) {
-      this.addColumnsRight(x - this.width + 1);
-    }
-    if (x < 0) {
-      this.addColumnsLeft(Math.abs(x));
-      x = 0;
-    }
-    if (y >= this.height) {
-      this.addRowsBottom(y - this.height + 1);
-    }
-    if (y < 0) {
-      this.addRowsTop(Math.abs(y));
-      y = 0;
-    }
-    this.area[x][y] =
-      typeof value === "function" ? value(this.area[x][y]) : value;
+    this.items.set(this.hash(x, y), value);
+    this.minX = Math.min(x, this.minX);
+    this.minY = Math.min(y, this.minY);
+    this.maxX = Math.max(x, this.maxX);
+    this.maxY = Math.max(y, this.maxY);
   }
 
-  drawLine(fromX, fromY, toX, toY, value) {
-    const xRange = getRange(fromX, toX).map(x => (x < 0 ? -1 : x));
-    const yRange = getRange(fromY, toY).map(y => (y < 0 ? -1 : y));
-
-    xRange.forEach(x =>
-      yRange.forEach(y => {
-        this.set(x, y, value);
-      })
-    );
+  get(x, y) {
+    const value = this.items.get(this.hash(x, y));
+    return value !== undefined ? value : this.emptyValue;
   }
 
-  getValuePositions(value, returnFirst = false) {
-    const positions = [];
-    for (let x = 0; x < this.width; x++) {
-      for (let y = 0; y < this.height; y++) {
-        if (this.area[x][y] === value) {
-          positions.push([x, y]);
-          if (returnFirst) {
-            return [x, y];
-          }
-        }
+  traverse(cb) {
+    for (let x = this.minX; x <= this.maxX; x++) {
+      for (let y = this.minY; y <= this.maxY; y++) {
+        cb(x, y, this.get(x, y));
       }
     }
-    return positions;
   }
 
-  print() {
+  print(cb = (x, y, item) => item) {
     let line = "";
-    for (let y = 0; y < this.height; y++) {
-      line = "";
-      for (let x = 0; x < this.width; x++) {
-        line += this.area[x][y];
+    for (let y = this.minY; y <= this.maxY; y++) {
+      for (let x = this.minX; x <= this.maxX; x++) {
+        line += cb(x, y, this.get(x, y));
       }
-      console.log(line);
+      line += "\n";
     }
-  }
-
-  addColumnsRight(count = 0, fillValue = this.emptyCellValue) {
-    for (let i = 0; i < count; i++) {
-      this.area.push(Array(this.height).fill(fillValue));
-    }
-    this.width += count;
-  }
-  addColumnsLeft(count = 0, fillValue = this.emptyCellValue) {
-    for (let i = 0; i < count; i++) {
-      this.area.unshift(Array(this.height).fill(fillValue));
-    }
-    this.width += count;
-  }
-  addRowsTop(count = 0, fillValue = this.emptyCellValue) {
-    this.area.map(row => row.unshift(...Array(count).fill(fillValue)));
-    this.height += count;
-  }
-  addRowsBottom(count = 0, fillValue = this.emptyCellValue) {
-    this.area.map(row => row.push(...Array(count).fill(fillValue)));
-    this.height += count;
+    console.log(line);
   }
 }
 
