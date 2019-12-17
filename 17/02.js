@@ -32,8 +32,7 @@ const run = async input => {
   // L,8,R,12,R,12,R,10,R,10,R,12,R,10
   // L,8,R,12,R,12,R,10,R,10,R,12,R,10
   // L,10,R,10,L,6,L,10,R,10,L,6,R,10,R,12,R,10
-
-  // L8 R12 R12 R10 R10 R12 R10 l10 r10 l6
+  // L8,R,12,R,12,R,10,R,10,R,12,R,10,L,10,R,10,L,6
   const mainRoutine = "A,B,A,B,C,C,B,A,B,C";
   const functionA = "L,8,R,12,R,12,R,10";
   const functionB = "R,10,R,12,R,10";
