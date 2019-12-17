@@ -31,11 +31,16 @@ class Area {
   }
 
   get(x, y) {
-    const value = this.items.get(this.hash(x, y));
+    let xPos = x;
+    let yPos = y;
+    if (Array.isArray(x)) {
+      [xPos, yPos] = x;
+    }
+    const value = this.items.get(this.hash(xPos, yPos));
     return value !== undefined ? value : this.emptyValue;
   }
 
-  traverse(cb) {
+  traverse(cb = () => {}) {
     for (let x = this.minX; x <= this.maxX; x++) {
       for (let y = this.minY; y <= this.maxY; y++) {
         cb(x, y, this.get(x, y));
@@ -52,6 +57,19 @@ class Area {
       line += "\n";
     }
     console.log(line);
+  }
+
+  getNeighbourCoords(x, y) {
+    return [
+      [x, y - 1],
+      [x + 1, y],
+      [x, y + 1],
+      [x - 1, y]
+    ];
+  }
+
+  getNeighbours(x, y) {
+    return this.getNeighbourCoords(x, y).map(this.get, this);
   }
 }
 

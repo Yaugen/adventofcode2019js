@@ -17,6 +17,7 @@ describe("Area", () => {
     expect(area.height).toBe(5);
     expect(area.width).toBe(5);
     expect(area.get(1, 1)).toBe(1);
+    expect(area.get([1, 1])).toBe(1);
   });
   test("it should work with negative indexes", () => {
     const area = new Area();

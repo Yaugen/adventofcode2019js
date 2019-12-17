@@ -5,7 +5,7 @@ class IntCodeMachine {
     this.memory = program.slice();
     this.pointer = 0;
     this.input = input;
-    this.output;
+    this.output = [];
     this.name = name;
     this.relativeBase = 0;
 
@@ -147,7 +147,7 @@ class IntCodeMachine {
     // console.log("output ", value);
     // setTimeout(() => this.onOutput(value), 0);
     this.onOutput(value);
-    this.output = value;
+    this.output.push(value);
     this.adjustPosition(2);
   }
   _jmpIfTrue([mode1, mode2]) {
