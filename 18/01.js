@@ -5,10 +5,6 @@ const { memoize } = require("lodash");
 
 const Area = require("../shared/Area");
 
-const input = fs
-  .readFileSync(path.resolve(__dirname, "./testInput.txt"), "utf8")
-  .split(os.EOL);
-
 const getArea = input => {
   const area = new Area("");
   input.forEach((line, y) =>
@@ -38,7 +34,7 @@ const getEdges = (area, initialCursor) => {
     for (const cursor of cursors) {
       if (cursor.item >= "A" && cursor.item <= "Z") {
         //door
-        cursor.doors.push(cursor.item);
+        cursor.doors.push(cursor.item.toLowerCase());
       }
       if (
         cursor.item >= "a" &&
@@ -78,7 +74,7 @@ const getEdges = (area, initialCursor) => {
   return edges;
 };
 
-const run = () => {
+const runNew = input => {
   let area = getArea(input);
   let curPos;
   area.traverse((x, y, item) => {
@@ -98,45 +94,63 @@ const run = () => {
   for (const { steps, doors, ...edge } of edges["@"].edges) {
     edges[edge.item] = { ...edge, edges: getEdges(area, edge) };
   }
-  console.log(edges["@"].edges);
+  console.log(Object.keys(edges).length, Object.keys(edges));
+  // console.log(edges["@"].edges);
 
-  let cursors = [{ ...initialEdge, steps: 0, visited: [] }];
+  let cursors = [{ ...initialEdge, steps: 0, visited: "" }];
   let result = [];
 
-  while (cursors.length) {
-    let newCursors = [];
-    console.time();
-    for (const cursor of cursors) {
-      const cursorEdges = edges[cursor.item].edges;
-      const cursorVisibleEdges = cursorEdges.filter(
+  const getVisible = visited => {
+    const item = visited[visited.length - 1];
+
+    return edges[item].edges
+      .filter(
         edge =>
-          !cursor.visited.includes(edge.item) &&
-          edge.doors
-            // .split("")
-            .every(door => cursor.visited.includes(door.toLowerCase()))
-      );
-      if (!cursorVisibleEdges.length) {
-        result.push(cursor);
-      } else {
-        newCursors = newCursors.concat(
-          cursorVisibleEdges.map(edge => ({
-            // x: edge.x,
-            // y: edge.y,
-            item: edge.item,
-            steps: cursor.steps + edge.steps,
-            visited: [...cursor.visited, edge.item]
-          }))
-        );
-      }
+          !visited.includes(edge.item) &&
+          edge.doors.every(door => visited.includes(door))
+      )
+      .map(edge => ({
+        item: edge.item,
+        steps: edge.steps,
+        visited: visited + edge.item
+      }));
+  };
+
+  let counter = 0;
+  let minSteps = 6094;
+
+  console.time();
+  while (cursors.length) {
+    const cursor = cursors.pop();
+    let visibleEdges = [];
+    if (cursor.steps < minSteps) {
+      visibleEdges = getVisible(cursor.visited || cursor.item);
     }
-    console.timeEnd();
-    console.log(newCursors.length);
-    cursors = newCursors;
+    if (!visibleEdges.length && cursor.steps < minSteps) {
+      console.log(cursors.length);
+
+      result.push(cursor);
+      minSteps = cursor.steps;
+      console.timeEnd();
+      console.log(cursor);
+      console.time();
+    } else {
+      visibleEdges.forEach(edge => {
+        edge.steps += cursor.steps;
+        cursors.push(edge);
+      });
+    }
   }
-  const minsteps = result.reduce(
-    (min, item) => (item.steps < min.steps ? item : min),
-    { steps: Infinity }
+  console.timeEnd();
+  console.log(
+    result.reduce((min, item) => (item.steps < min.steps ? item : min), {
+      steps: Infinity
+    })
   );
-  console.log(minsteps);
 };
-run();
+
+const input = fs
+  .readFileSync(path.resolve(__dirname, "./input.txt"), "utf8")
+  .split(os.EOL);
+
+runNew(input);
