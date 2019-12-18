@@ -71,6 +71,22 @@ class Area {
   getNeighbours(x, y) {
     return this.getNeighbourCoords(x, y).map(this.get, this);
   }
+
+  clone() {
+    const area = new Area(this.emptyValue);
+    area.minX = this.minX;
+    area.minY = this.minY;
+    area.maxX = this.maxX;
+    area.maxY = this.maxY;
+    area.items = new Map(Array.from(this.items.entries()));
+
+    // for (let x = this.minX; x <= this.maxX; x++) {
+    //   for (let y = this.minY; y <= this.maxY; y++) {
+    //     area.set(x, y, this.get(x, y));
+    //   }
+    // }
+    return area;
+  }
 }
 
 module.exports = Area;
