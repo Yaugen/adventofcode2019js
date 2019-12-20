@@ -50,11 +50,7 @@ const getEdges = (area, initialCursor) => {
 
       const possibleMoves = [];
       for (const { x, y, item } of neighbours) {
-        if (
-          item !== "#" &&
-          !visited.includes(area.hash(x, y)) // &&
-          // !newCursors.find(cursor => cursor.x === x && cursor.y === y)
-        ) {
+        if (item !== "#" && !visited.includes(area.hash(x, y))) {
           possibleMoves.push({
             x,
             y,
@@ -71,10 +67,10 @@ const getEdges = (area, initialCursor) => {
     cursors = newCursors;
   }
 
-  return edges;
+  return edges.reduce((acc, edge) => ({ ...acc, [edge.item]: edge }), {});
 };
 
-const runNew = input => {
+const run = input => {
   let area = getArea(input);
   let curPos;
   area.traverse((x, y, item) => {
@@ -91,66 +87,57 @@ const runNew = input => {
       edges: getEdges(area, initialEdge)
     }
   };
-  for (const { steps, doors, ...edge } of edges["@"].edges) {
+  for (const { steps, doors, ...edge } of Object.values(edges["@"].edges)) {
     edges[edge.item] = { ...edge, edges: getEdges(area, edge) };
   }
   console.log(Object.keys(edges).length, Object.keys(edges));
   // console.log(edges["@"].edges);
 
-  let cursors = [{ ...initialEdge, steps: 0, visited: "" }];
-  let result = [];
-
-  const getVisible = visited => {
-    const item = visited[visited.length - 1];
-
-    return edges[item].edges
-      .filter(
-        edge =>
-          !visited.includes(edge.item) &&
-          edge.doors.every(door => visited.includes(door))
-      )
-      .map(edge => ({
-        item: edge.item,
-        steps: edge.steps,
-        visited: visited + edge.item
-      }));
+  const keys = Object.keys(edges)
+    .sort()
+    .filter(k => k !== "@");
+  // console.log(keys);
+  // console.log(edges);
+  const shortestPath = (visited, distance, memo) => {
+    if (keys.length === visited.length - 1) {
+      return distance;
+    }
+    const current = visited[visited.length - 1];
+    const keysToVisit = keys.filter(
+      key =>
+        !visited.includes(key) &&
+        edges[current].edges[key].doors.every(door => visited.includes(door))
+    );
+    if (keysToVisit.length === 0) {
+      return distance;
+    }
+    const memoKey = `${current}:${keys
+      .filter(k => !visited.includes(k))
+      .join("")}`;
+    if (memo[memoKey] !== undefined) {
+      // console.log("hit");
+      return memo[memoKey] + distance;
+    }
+    let min = Number.MAX_SAFE_INTEGER;
+    for (const key of keysToVisit) {
+      min = Math.min(
+        min,
+        shortestPath(
+          [...visited, key],
+          distance + edges[current].edges[key].steps,
+          memo
+        )
+      );
+    }
+    memo[memoKey] = min - distance;
+    return min;
   };
 
-  let counter = 0;
-  let minSteps = 6094;
-
-  console.time();
-  while (cursors.length) {
-    const cursor = cursors.pop();
-    let visibleEdges = [];
-    if (cursor.steps < minSteps) {
-      visibleEdges = getVisible(cursor.visited || cursor.item);
-    }
-    if (!visibleEdges.length && cursor.steps < minSteps) {
-      console.log(cursors.length);
-
-      result.push(cursor);
-      minSteps = cursor.steps;
-      console.timeEnd();
-      console.log(cursor);
-      console.time();
-    } else {
-      visibleEdges.forEach(edge => {
-        edge.steps += cursor.steps;
-        cursors.push(edge);
-      });
-    }
-  }
-  console.timeEnd();
-  console.log(
-    result.reduce((min, item) => (item.steps < min.steps ? item : min), {
-      steps: Infinity
-    })
-  );
+  console.log(shortestPath(["@"], 0, {}));
 };
 
 const input = fs
-  .readFileSync(path.resolve(__dirname, "./input.txt"), "utf8")
+  .readFileSync(path.resolve(__dirname, "./testInput.txt"), "utf8")
   .split(os.EOL);
 
-runNew(input);
+run(input);
