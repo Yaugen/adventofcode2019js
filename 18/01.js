@@ -90,14 +90,11 @@ const run = input => {
   for (const { steps, doors, ...edge } of Object.values(edges["@"].edges)) {
     edges[edge.item] = { ...edge, edges: getEdges(area, edge) };
   }
-  console.log(Object.keys(edges).length, Object.keys(edges));
-  // console.log(edges["@"].edges);
 
   const keys = Object.keys(edges)
     .sort()
     .filter(k => k !== "@");
-  // console.log(keys);
-  // console.log(edges);
+
   const shortestPath = (visited, distance, memo) => {
     if (keys.length === visited.length - 1) {
       return distance;
