@@ -2,15 +2,6 @@ const fs = require("fs");
 const path = require("path");
 const os = require("os");
 
-const expmod = (base, exp, mod) => {
-  if (exp == 0) return 1;
-  if (exp % 2 == 0) {
-    return Math.pow(expmod(base, exp / 2, mod), 2) % mod;
-  } else {
-    return (base * expmod(base, exp - 1, mod)) % mod;
-  }
-};
-
 const getShuffleOrder = inputPath => {
   return fs
     .readFileSync(path.resolve(__dirname, inputPath), "utf8")
@@ -31,45 +22,73 @@ const getShuffleOrder = inputPath => {
     });
 };
 
+const mod = (a, b) => ((a % b) + b) % b;
+
+const egcd = (a, b) => {
+  if (a === 0) {
+    return [b, 0, 1];
+  } else {
+    const [g, y, x] = egcd(mod(b, a), a);
+    return [g, x - Math.floor(b / a) * y, y];
+  }
+};
+
+const modInv = (a, m) => {
+  const [g, x, y] = egcd(a, m);
+  if (g !== 1) {
+    throw new Error("modular inverse does not exist");
+  } else {
+    return mod(x, m);
+  }
+};
+
+const expmod = (base, exp, mod) => {
+  if (exp == 0) return 1;
+  if (exp % 2 == 0) {
+    return Math.pow(expmod(base, exp / 2, mod), 2) % mod;
+  } else {
+    return (base * expmod(base, exp - 1, mod)) % mod;
+  }
+};
+
+const modPow = (a, b, n) => {
+  if (b === 1n) {
+    return a;
+  }
+  if (b % 2n === 0n) {
+    const r = modPow(a, b / 2n, n);
+    return (r * r) % n;
+  }
+  if (b % 2n == 1n) {
+    return (a * modPow(a, b - 1n, n)) % n;
+  }
+};
+
 const run = inputPath => {
   const shuffleOrder = getShuffleOrder(inputPath);
-  const cards = 119315717514047;
+  const N = 119315717514047;
   const repeats = 101741582076661;
 
-  const inv = n => {
-    const powed = expmod(n, cards - 2, cards);
-    return powed;
-  };
-  const get = (offset, increment, i) => (offset + i * increment) % cards;
-
-  let incrementMul = 1;
-  let offsetDiff = 0;
+  let cards = [1, 0];
 
   shuffleOrder.forEach(([shuffleType, n]) => {
+    const [a, b] = cards;
     if (shuffleType === "new stack") {
-      incrementMul = incrementMul * -1;
-      incrementMul = incrementMul % cards;
-
-      offsetDiff = offsetDiff + incrementMul;
-      offsetDiff = offsetDiff % cards;
+      cards = [mod(-a, N), mod(-b - 1, N)];
     } else if (shuffleType === "cut") {
-      offsetDiff = offsetDiff + incrementMul * n;
-      offsetDiff = offsetDiff % cards;
+      cards = [a, mod(b - n, N)];
     } else if (shuffleType === "increment") {
-      incrementMul = incrementMul * inv(n);
-      incrementMul = incrementMul % cards;
+      cards = [mod(a * n, N), mod(b * n, N)];
     }
   });
 
-  let increment = expmod(incrementMul, repeats, cards);
-  let offset = offsetDiff * (1 - increment) * inv((1 - incrementMul) % cards);
-  offset = offset % cards;
+  const [a, b] = cards;
+  const an = Number(modPow(BigInt(a), BigInt(repeats), BigInt(N)));
 
-  console.log(get(offset, increment, 2020));
+  const A = an;
+  const B = b * (an - 1) * modInv(a - 1, N);
+  console.log(A, B);
+  console.log(mod((2020 - B) * modInv(A, N), N));
 };
 
-// console.log(run("./testInputA.txt", 10));
-// console.log(run("./testInputB.txt", 10));
-// console.log(run("./testInputC.txt", 10));
-// console.log(run("./testInputD.txt", 10));
 run("./input.txt");
