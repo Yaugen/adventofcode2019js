@@ -18,7 +18,11 @@ const run = async code => {
     "NOT C T",
     "OR T J",
     "AND D J",
-    "WALK"
+    "NOT E T",
+    "NOT T T",
+    "OR H T",
+    "AND T J",
+    "RUN"
   ];
 
   const machine = new IntCodeMachine(code, convert(program));
