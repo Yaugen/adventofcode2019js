@@ -38,12 +38,55 @@ const opposite = dir => {
 };
 
 const sendCommands = (machine, cmds) => {
-  console.log("send", cmds);
+  // console.log("send", cmds);
   cmds.forEach(cmd => {
     [...cmd.split(""), "\n"]
       .map(char => char.charCodeAt())
       .forEach(code => machine.sendInput(code));
   });
+};
+
+const getValidMoves = room => {
+  const knownMoves = Object.keys(room.rooms);
+  return room.directions.filter(direction => !knownMoves.includes(direction));
+};
+
+const getRoute = (from, to) => {
+  const cursors = [{ room: from, path: [] }];
+  const visited = [];
+  while (true) {
+    const cursor = cursors.shift();
+    visited.push(cursor.room);
+    const newCursors = Object.entries(cursor.room.rooms)
+      .filter(([, room]) => !visited.includes(room))
+      .map(([name, room]) => ({
+        room,
+        path: cursor.path.concat([name])
+      }));
+
+    const found = newCursors.find(r => r.room === to);
+    if (found) {
+      return found.path;
+    }
+    cursors.push(...newCursors);
+  }
+};
+
+const getDiscoveryMoves = room => {
+  let moves = getValidMoves(room);
+  if (moves.length) {
+    return [moves.pop()];
+  }
+};
+
+const getMovesToUndiscoveredRoom = (rooms, room) => {
+  const roomWithUndiscoveredPaths = Object.values(rooms).find(r => {
+    const validMoves = getValidMoves(r);
+    return validMoves.length > 0;
+  });
+  if (roomWithUndiscoveredPaths) {
+    return getRoute(room, roomWithUndiscoveredPaths).slice(0, 1);
+  }
 };
 
 const run = async () => {
@@ -54,31 +97,9 @@ const run = async () => {
   const rooms = {};
   let lastRoom;
 
-  const getValidMoves = room => {
-    const knownMoves = Object.keys(room.rooms);
+  const processRoom = output => {
+    const { name, directions, items } = parseOutput(output);
 
-    return room.directions.filter(direction => !knownMoves.includes(direction));
-  };
-  const getNextMoves = room => {
-    let moves = getValidMoves(room);
-    if (moves.length) {
-      return { moves: [moves.pop()] };
-    }
-
-    let currentRoom = room;
-    while (!getValidMoves(currentRoom).length) {
-      const step = opposite(steps.pop());
-      currentRoom = currentRoom.rooms[step];
-      moves.push(step);
-      if (!currentRoom) {
-        break;
-      }
-    }
-
-    return { moves, targetRoom: currentRoom };
-  };
-
-  const processRoom = (name, directions, items) => {
     let currentRoom = rooms[name];
     // let isNewRoom = false;
     const lastStep = steps[steps.length - 1];
@@ -93,6 +114,16 @@ const run = async () => {
       currentRoom.rooms[opposite(lastStep)] = lastRoom;
     }
 
+    if (currentRoom.name === "Security Checkpoint") {
+      const [floorDirection] = getValidMoves(currentRoom);
+      rooms["Floor"] = {
+        name: "Floor",
+        directions: [opposite(floorDirection)],
+        rooms: { [opposite(floorDirection)]: currentRoom }
+      };
+      currentRoom.rooms[floorDirection] = rooms["Floor"];
+    }
+
     return currentRoom;
   };
 
@@ -101,20 +132,20 @@ const run = async () => {
   };
 
   machine.onAwaitsInput = async () => {
-    console.log(output);
-    const { name, directions, items } = parseOutput(output);
-    const room = processRoom(name, directions, items);
-    console.log(room);
-    const { moves: nextMoves, targetRoom } = getNextMoves(room);
-    console.log(nextMoves);
-    if (nextMoves.length > 1) {
-      lastRoom = targetRoom;
-      sendCommands(machine, nextMoves);
+    // console.log(output);
+    const room = processRoom(output);
+    // console.log(room.name);
+    let nextMoves =
+      getDiscoveryMoves(room) || getMovesToUndiscoveredRoom(rooms, room);
+    // console.log(nextMoves);
+
+    if (!nextMoves) {
+      console.log(rooms);
+      console.log("done");
       return;
     }
-
     // const input = await askQuestion("");
-    steps.push(nextMoves[0]);
+    steps.push(...nextMoves);
     output = [];
     lastRoom = room;
     sendCommands(machine, nextMoves);
